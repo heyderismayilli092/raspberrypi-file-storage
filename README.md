@@ -5,7 +5,7 @@ This project allows you to upload, download, and manage files from **any device 
 
 ---
 
-## ✨ Features
+## Features
 
 - Upload files from any device on the same network
 - Download stored files via browser
