@@ -32,7 +32,7 @@ This project allows you to upload, download, and manage files from **any device 
 
 ---
 
-## 🏗️ How It Works (Backend Logic)
+## How It Works (Backend Logic)
 When the server starts, it broadcasts via the IP address of the computer's WLAN0 network interface and port 1033. When you type http://192.168.x.x:1033, you will reach the upload screen. A "files_storage" folder is created in the server's startup area, and files from each device are stored there. When files are received from the other side, they are uploaded in parts, and the parts are combined at the end. This method prevents the process from being interrupted when sending large files.
 
 ---
