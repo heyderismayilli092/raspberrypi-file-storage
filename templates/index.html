@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>File Storage Server</title>
+<style>
+  body {
+    background-color: #000;
+    font-family: sans-serif;
+    color: #fff;
+  }
+
+  /* Title */
+  h2 {
+    text-align: center;
+  }
+  p {
+    text-align: center;
+    margin-bottom: 30px;
+  }
+
+   /* Upload Area */
+  .upload-box {
+    border: 2px dashed #1e2cff;
+    padding: 40px;
+    border-radius: 10px;
+    text-align: center;
+    max-width: 500px;
+    margin: 0 auto 30px auto;
+    background-color: #05078e22;
+  }
+
+  .custom-file {
+    display: inline-block;
+    padding: 15px 25px;
+    background-color: #05078e;
+    border-radius: 6px;
+    cursor: pointer;
+    margin-bottom: 15px;
+  }
+
+  .custom-file:hover {
+    background-color: #0a0ddf;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  button {
+    background-color: #04156d;
+    color: white;
+    padding: 15px 35px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    margin-top: 15px;
+  }
+
+  button:hover {
+    background-color: #0a0ddf;
+  }
+
+  /* Progress bar */
+  #progressContainer {
+      width: 100%;
+      height: 25px;
+      border-radius: 20px;
+      background-color: #222;
+      margin-top: 20px;
+      overflow: hidden;
+  }
+
+  #progressBar {
+     height: 100%;
+     width: 0%;
+     background: linear-gradient(90deg, #00ff88, #00aa55);
+     transition: width 0.2s;
+  }
+
+  #progressText {
+    display: block;
+    text-align: center;
+    margin-top: 10px;
+  }
+
+  #fileList {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    padding: 0;
+    list-style: none;
+    margin: 40px auto;
+    max-width: 1000px;
+  }
+
+  /* Tablet */
+  @media (max-width: 900px) {
+    #fileList {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  /* Phone */
+  @media (max-width: 600px) {
+    #fileList {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .file-card {
+    background-color: #111;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 15px;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+
+  .file-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 0 15px #0a0ddf88;
+  }
+
+  .file-card a {
+    color: #00ccff;
+    text-decoration: none;
+    display: block;
+    margin-bottom: 10px;
+    word-break: break-all;
+  }
+
+  /* Uploaded file delete */
+  .delete-btn {
+    background-color: #b00000;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: none;
+    cursor: pointer;
+    width: 100%;
+  }
+
+  .delete-btn:hover {
+    background-color: #ff0000;
+  }
+</style>
+</head>
+
+<body>
+
+<h2>📁 File Storage System</h2>
+<p>1.0</p>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<div class="upload-box">
+    <label class="custom-file">Choose File
+        <input type="file" id="fileInput">
+    </label>
+    <span id="selectedFileName" style="display:block; margin-top:10px; color:#00ccff;"></span>
+    <br>
+    <!--Upload button-->
+    <button onclick="uploadFile()">Upload</button>
+
+    <div id="progressContainer">
+        <div id="progressBar"></div>
+    </div>
+    <span id="progressText">0%</span>
+</div>
+
+<h3 style="text-align:center;">Uploaded Files</h3>
+<ul id="fileList"></ul>
+
+<script>
+async function uploadFile() {
+    const fileInput = document.getElementById('fileInput');
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    const chunkSize = 512*1024;
+    const totalChunks = Math.ceil(file.size / chunkSize);
+
+    for (let i = 0; i < totalChunks; i++) {
+        const chunk = file.slice(i*chunkSize, (i+1)*chunkSize);
+        const formData = new FormData();
+        formData.append('file', chunk);
+        formData.append('filename', file.name);
+        formData.append('chunk_index', i);
+        formData.append('total_chunks', totalChunks);
+
+        await fetch('/upload', { method: 'POST', body: formData });
+
+        const percent = Math.round((i+1)/totalChunks*100);  // As each piece is sent, the progress bar is incremented by half of the total piece i+1
+        document.getElementById('progressBar').style.width = percent + '%';
+        document.getElementById('progressText').innerText = percent + '%';
+    }
+    loadFiles();
+}
+
+// load uploaded files
+async function loadFiles() {
+    const res = await fetch('/files');
+    const files = await res.json();
+    const list = document.getElementById('fileList');
+    list.innerHTML = '';
+
+    files.forEach(f => {
+        const li = document.createElement('li');
+        li.className = 'file-card';
+
+        // download link
+        const link = document.createElement('a');
+        link.href = '/getfile/' + encodeURIComponent(f.name);
+        link.textContent = f.name;
+        link.download = f.name;
+
+        // metadata
+        const meta = document.createElement('div');
+        meta.style.fontSize = '13px';
+        meta.style.color = '#aaa';
+
+        meta.innerHTML = `
+            <p><b>MD5:</b> ${f.md5}</p>
+            <p><b>Size:</b> ${f.size} bytes</p>
+            <p><b>Modified:</b> ${f.mtime}</p>
+        `;
+
+        // delete button
+        const del = document.createElement('button');
+        del.className = 'delete-btn';
+        del.innerText = 'Delete File';
+        del.onclick = async () => {
+            await fetch('/deletefile/' + encodeURIComponent(f.name), { method: 'POST' });
+            loadFiles();
+        };
+
+        // elements added list
+        li.appendChild(link);
+        li.appendChild(meta);
+        li.appendChild(del);
+        list.appendChild(li);
+    });
+}
+
+document.getElementById('fileInput').addEventListener('change', function () {
+    const fileNameSpan = document.getElementById('selectedFileName');
+    if (this.files.length > 0) {
+        fileNameSpan.textContent = 'Choosed file: ' + this.files[0].name;
+    } else {
+        fileNameSpan.textContent = '';
+    }
+});
+
+
+loadFiles();
+</script>
+</body>
+</html>
+
