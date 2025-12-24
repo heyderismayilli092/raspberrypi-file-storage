@@ -37,15 +37,16 @@ When the server starts, it broadcasts via the IP address of the computer's WLAN0
 
 ---
 
-## Usage
+## Run application
 
 1. Deploy the application on a Raspberry Pi
-2. Connect the Raspberry Pi to your local network
-3. Access the web interface from:
+2. Connect the Raspberry Pi to your network
+3. Run command: `bash run-service.sh`
+4. Access the web interface from:
    - A phone
    - A laptop
    - Any device on the same network
-4. Upload and manage files easily through the browser
+5. Upload and manage files easily through the browser
 
 This makes the Raspberry Pi behave like a simple **local NAS (Network Attached Storage)** solution.
 
