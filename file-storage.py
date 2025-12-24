@@ -9,20 +9,6 @@ import struct
 import psutil
 import hashlib
 
-# wlan0 is getting the IP address of the network interface.
-def get_ip_address(ifname="wlan0"):
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    try:
-      return socket.inet_ntoa(
-              fcntl.ioctl(
-              s.fileno(),
-              0x8915,  # SIOCGIFADDR
-              struct.pack('256s', "wlan0"[:15].encode('utf-8'))
-          )[20:24]
-      )
-    except OSError:
-      return "127.0.0.1"  # If network interface is not created, start from localhost
-
 app = Flask(__name__)
 upload_folder = os.getcwd()+'/files_storage'
 CHUNK_FOLDER = os.getcwd()+'/chunks'
@@ -104,4 +90,4 @@ def deletefile(filename):
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=1033, host=get_ip_address())
+    app.run(debug=True, port=1033, host="127.0.0.1")
